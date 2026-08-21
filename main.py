@@ -1,5 +1,5 @@
 # main.py
-# Author: j7110701-debug
+# Author: Jimbo
 # Conspiracy Chat Bot — lightweight FastAPI + CLI app
 
 from fastapi import FastAPI, Request
@@ -11,11 +11,11 @@ from typing import Optional
 
 import reasoning_iter as reasoning
 
-app = FastAPI(title="Conspiracy Chat Bot", description="Iterative-reasoning assistant (author: j7110701-debug)")
+app = FastAPI(title="Conspiracy Chat Bot", description="Iterative-reasoning assistant (author: Jimbo)")
 
 @app.get("/")
 def read_root():
-    return {"message": "Hello from my Python app!", "author": "j7110701-debug"}
+    return {"message": "Hello from my Python app!", "author": "Jimbo"}
 
 class ThinkRequest(BaseModel):
     question: str
@@ -46,7 +46,7 @@ async def ui(request: Request):
       </head>
       <body>
         <h1>Conspiracy Chat Bot</h1>
-        <p>Author: <strong>j7110701-debug</strong></p>
+        <p>Author: <strong>Jimbo</strong></p>
         <form id="thinkForm">
           <label for="q">Question:</label><br />
           <textarea id="q" name="question">Explain Newton's second law.</textarea><br />
@@ -60,7 +60,7 @@ async def ui(request: Request):
           <br /><br />
           <button type="button" onclick="submitQuestion()">Ask</button>
         </form>
-        <h2>Result (Author: j7110701-debug)</h2>
+        <h2>Result (Author: Jimbo)</h2>
         <div id="result">
           <em>Responses will appear here.</em>
         </div>
