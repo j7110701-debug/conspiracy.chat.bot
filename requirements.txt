@@ -5,3 +5,4 @@ python-dotenv==1.0.0
 openai>=1.0.0
 streamlit>=1.61.1
 requests>=2.31.0
+pytz>=2024.1
