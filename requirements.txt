@@ -1,4 +1,0 @@
-streamlit
-google-generativeai
-google-cloud-texttospeech
-SpeechRecognition
