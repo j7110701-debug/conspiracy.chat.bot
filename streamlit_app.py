@@ -1,8 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-import pyttsx3
 import speech_recognition as sr
+from google.cloud import texttospeech
 
 # Validate API key
 api_key = os.environ.get("GOOGLE_API_KEY")
@@ -22,6 +22,31 @@ st.markdown("### 🎤 Voice Mode: Press & Hold to Record")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+def text_to_speech(text):
+    """Convert text to speech using Google Cloud TTS"""
+    try:
+        client = texttospeech.TextToSpeechClient()
+        
+        synthesis_input = texttospeech.SynthesisInput(text=text)
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="en-US",
+            ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL
+        )
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
+        
+        response = client.synthesize_speech(
+            input=synthesis_input,
+            voice=voice,
+            audio_config=audio_config
+        )
+        
+        return response.audio_content
+    except Exception as e:
+        st.warning(f"Could not generate audio: {str(e)}")
+        return None
 
 def process_message(prompt, use_voice=False):
     """Process user message and generate response"""
@@ -49,22 +74,9 @@ def process_message(prompt, use_voice=False):
                     
                     # Auto-play audio if voice was used
                     if use_voice:
-                        try:
-                            # Convert text to speech
-                            engine = pyttsx3.init()
-                            engine.setProperty('rate', 150)  # Speed
-                            engine.save_to_file(reply, "response_audio.mp3")
-                            engine.runAndWait()
-                            
-                            # Play audio automatically
-                            with open("response_audio.mp3", "rb") as f:
-                                st.audio(f.read(), format="audio/mp3", autoplay=True)
-                            
-                            # Clean up
-                            if os.path.exists("response_audio.mp3"):
-                                os.remove("response_audio.mp3")
-                        except Exception as e:
-                            st.warning(f"Could not generate audio: {str(e)}")
+                        audio_content = text_to_speech(reply)
+                        if audio_content:
+                            st.audio(audio_content, format="audio/mp3", autoplay=True)
                 else:
                     st.error("❌ Failed to get a response from the model. Try again.")
                     st.session_state.messages.pop()
