@@ -63,19 +63,6 @@ def process_message(prompt, use_voice=False):
                 reply = response.text
                 placeholder.write(reply)  # Replace "Thinking..." with actual response
                 st.session_state.messages.append({"role": "assistant", "content": reply})
-                
-                # Generate and play audio if voice was used
-                if use_voice:
-                    audio_content = text_to_speech(reply)
-                    if audio_content:
-                        st.audio(audio_content, format="audio/mpeg", autoplay=True)
-            else:
-                placeholder.error("❌ Failed to get a response. Try again.")
-                st.session_state.messages.pop()
-                
-        except Exception as e:
-            placeholder.error(f"❌ Error: {str(e)}")
-            st.session_state.messages.pop()
 
 # Display conversation history
 for msg in st.session_state.messages:
@@ -83,30 +70,9 @@ for msg in st.session_state.messages:
         st.write(msg["content"])
 
 # Two input modes
-col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("**Text Input:**")
     if prompt := st.chat_input("Or type your question..."):
         process_message(prompt)
 
-with col2:
-    st.markdown("**Voice Input:**")
-    audio_value = st.audio_input("🎤 Click to record")
-    
-    if audio_value is not None:
-        try:
-            # Convert audio to text
-            recognizer = sr.Recognizer()
-            with sr.AudioFile(audio_value) as source:
-                audio = recognizer.record(source)
-            
-            prompt = recognizer.recognize_google(audio)
-            st.success(f"📝 You said: {prompt}")
-            process_message(prompt, use_voice=True)
-        except sr.UnknownValueError:
-            st.error("❌ Could not understand audio. Please try again.")
-        except sr.RequestError as e:
-            st.error(f"❌ Error: {str(e)}")
-        except Exception as e:
-            st.error(f"❌ Error processing audio: {str(e)}")
