@@ -2,6 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 import os
 import pyttsx3
+import speech_recognition as sr
 from io import BytesIO
 
 # Validate API key
@@ -17,6 +18,8 @@ st.set_page_config(page_title="Conspiracy Chat Bot", page_icon="🤖", layout="w
 st.title("🤖 Conspiracy Chat Bot")
 st.markdown("**Author:** Jimbo")
 st.caption("Iterative reasoning on conspiracy theories")
+st.markdown("---")
+st.markdown("### 🎤 Voice Mode: Press & Hold to Record")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -26,7 +29,37 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-if prompt := st.chat_input("Ask about any conspiracy theory..."):
+# Two input modes
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("**Text Input:**")
+    if prompt := st.chat_input("Or type your question..."):
+        process_message(prompt)
+
+with col2:
+    st.markdown("**Voice Input:**")
+    audio_value = st.audio_input("🎤 Click to record")
+    
+    if audio_value is not None:
+        try:
+            # Convert audio to text
+            recognizer = sr.Recognizer()
+            with sr.AudioFile(audio_value) as source:
+                audio = recognizer.record(source)
+            
+            prompt = recognizer.recognize_google(audio)
+            st.success(f"📝 You said: {prompt}")
+            process_message(prompt, use_voice=True)
+        except sr.UnknownValueError:
+            st.error("❌ Could not understand audio. Please try again.")
+        except sr.RequestError as e:
+            st.error(f"❌ Error: {str(e)}")
+        except Exception as e:
+            st.error(f"❌ Error processing audio: {str(e)}")
+
+def process_message(prompt, use_voice=False):
+    """Process user message and generate response"""
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.write(prompt)
@@ -37,7 +70,7 @@ if prompt := st.chat_input("Ask about any conspiracy theory..."):
                 # Build conversation context for iterative reasoning
                 conversation_context = "\n".join(
                     [f"{msg['role'].capitalize()}: {msg['content']}" 
-                     for msg in st.session_state.messages[:-1]]  # Exclude the last user message to avoid duplication
+                     for msg in st.session_state.messages[:-1]]
                 )
                 
                 response = model.generate_content(
@@ -49,35 +82,28 @@ if prompt := st.chat_input("Ask about any conspiracy theory..."):
                     st.write(reply)
                     st.session_state.messages.append({"role": "assistant", "content": reply})
                     
-                    # Add listen button for response
-                    col1, col2 = st.columns([3, 1])
-                    with col2:
-                        if st.button("🔊 Listen"):
-                            try:
-                                # Convert text to speech
-                                engine = pyttsx3.init()
-                                engine.setProperty('rate', 150)  # Speed
-                                
-                                # Save to bytes
-                                audio_buffer = BytesIO()
-                                engine.save_to_file(reply, "temp_audio.mp3")
-                                engine.runAndWait()
-                                
-                                # Play audio
-                                with open("temp_audio.mp3", "rb") as f:
-                                    st.audio(f.read(), format="audio/mp3")
-                                
-                                # Clean up
-                                if os.path.exists("temp_audio.mp3"):
-                                    os.remove("temp_audio.mp3")
-                            except Exception as e:
-                                st.warning(f"Could not generate audio: {str(e)}")
+                    # Auto-play audio if voice was used
+                    if use_voice:
+                        try:
+                            # Convert text to speech
+                            engine = pyttsx3.init()
+                            engine.setProperty('rate', 150)  # Speed
+                            engine.save_to_file(reply, "response_audio.mp3")
+                            engine.runAndWait()
+                            
+                            # Play audio automatically
+                            with open("response_audio.mp3", "rb") as f:
+                                st.audio(f.read(), format="audio/mp3", autoplay=True)
+                            
+                            # Clean up
+                            if os.path.exists("response_audio.mp3"):
+                                os.remove("response_audio.mp3")
+                        except Exception as e:
+                            st.warning(f"Could not generate audio: {str(e)}")
                 else:
                     st.error("❌ Failed to get a response from the model. Try again.")
-                    # Remove the incomplete user message
                     st.session_state.messages.pop()
                     
             except Exception as e:
                 st.error(f"❌ Error communicating with the API: {str(e)}")
-                # Remove the incomplete user message
                 st.session_state.messages.pop()
