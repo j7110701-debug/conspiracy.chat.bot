@@ -1,7 +1,7 @@
 import streamlit as st
-import google.generativeai as genai
+import google.genai as genai
 import os
-import speech_recognition as sr
+import 
 import requests
 
 # Validate API key
