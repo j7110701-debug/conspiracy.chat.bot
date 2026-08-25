@@ -3,7 +3,6 @@ import google.generativeai as genai
 import os
 import pyttsx3
 import speech_recognition as sr
-from io import BytesIO
 
 # Validate API key
 api_key = os.environ.get("GOOGLE_API_KEY")
@@ -23,40 +22,6 @@ st.markdown("### 🎤 Voice Mode: Press & Hold to Record")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
-# Display conversation history
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
-
-# Two input modes
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("**Text Input:**")
-    if prompt := st.chat_input("Or type your question..."):
-        process_message(prompt)
-
-with col2:
-    st.markdown("**Voice Input:**")
-    audio_value = st.audio_input("🎤 Click to record")
-    
-    if audio_value is not None:
-        try:
-            # Convert audio to text
-            recognizer = sr.Recognizer()
-            with sr.AudioFile(audio_value) as source:
-                audio = recognizer.record(source)
-            
-            prompt = recognizer.recognize_google(audio)
-            st.success(f"📝 You said: {prompt}")
-            process_message(prompt, use_voice=True)
-        except sr.UnknownValueError:
-            st.error("❌ Could not understand audio. Please try again.")
-        except sr.RequestError as e:
-            st.error(f"❌ Error: {str(e)}")
-        except Exception as e:
-            st.error(f"❌ Error processing audio: {str(e)}")
 
 def process_message(prompt, use_voice=False):
     """Process user message and generate response"""
@@ -107,3 +72,37 @@ def process_message(prompt, use_voice=False):
             except Exception as e:
                 st.error(f"❌ Error communicating with the API: {str(e)}")
                 st.session_state.messages.pop()
+
+# Display conversation history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
+
+# Two input modes
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("**Text Input:**")
+    if prompt := st.chat_input("Or type your question..."):
+        process_message(prompt)
+
+with col2:
+    st.markdown("**Voice Input:**")
+    audio_value = st.audio_input("🎤 Click to record")
+    
+    if audio_value is not None:
+        try:
+            # Convert audio to text
+            recognizer = sr.Recognizer()
+            with sr.AudioFile(audio_value) as source:
+                audio = recognizer.record(source)
+            
+            prompt = recognizer.recognize_google(audio)
+            st.success(f"📝 You said: {prompt}")
+            process_message(prompt, use_voice=True)
+        except sr.UnknownValueError:
+            st.error("❌ Could not understand audio. Please try again.")
+        except sr.RequestError as e:
+            st.error(f"❌ Error: {str(e)}")
+        except Exception as e:
+            st.error(f"❌ Error processing audio: {str(e)}")
