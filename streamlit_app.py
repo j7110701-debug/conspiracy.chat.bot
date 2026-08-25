@@ -2,8 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 import os
 import speech_recognition as sr
-from google.cloud import texttospeech
-import io
+import requests
 
 # Validate API key
 api_key = os.environ.get("GOOGLE_API_KEY")
@@ -25,28 +24,18 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 def text_to_speech(text):
-    """Convert text to speech using Google Cloud TTS"""
+    """Convert text to speech using free API"""
     try:
-        client = texttospeech.TextToSpeechClient()
+        # Using gTTS (Google Text-to-Speech) via API
+        url = f"https://tts-api.com/tts?text={text[:200]}&lang=en"
+        response = requests.get(url, timeout=10)
         
-        synthesis_input = texttospeech.SynthesisInput(text=text)
-        voice = texttospeech.VoiceSelectionParams(
-            language_code="en-US",
-            ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL
-        )
-        audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3
-        )
-        
-        response = client.synthesize_speech(
-            input=synthesis_input,
-            voice=voice,
-            audio_config=audio_config
-        )
-        
-        return response.audio_content
+        if response.status_code == 200:
+            return response.content
+        else:
+            return None
     except Exception as e:
-        st.error(f"Audio error: {str(e)}")
+        st.warning(f"Could not generate audio: {str(e)}")
         return None
 
 def process_message(prompt, use_voice=False):
@@ -80,7 +69,7 @@ def process_message(prompt, use_voice=False):
                 if use_voice:
                     audio_content = text_to_speech(reply)
                     if audio_content:
-                        st.audio(audio_content, format="audio/mp3", autoplay=True)
+                        st.audio(audio_content, format="audio/mpeg", autoplay=True)
             else:
                 placeholder.error("❌ Failed to get a response. Try again.")
                 st.session_state.messages.pop()
