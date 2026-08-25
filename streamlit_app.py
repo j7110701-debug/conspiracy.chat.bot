@@ -1,7 +1,6 @@
 import streamlit as st
 import google.genai as genai
 import os
-import 
 import requests
 
 # Validate API key
