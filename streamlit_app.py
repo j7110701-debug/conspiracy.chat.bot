@@ -3,6 +3,7 @@ import google.generativeai as genai
 import os
 import speech_recognition as sr
 from google.cloud import texttospeech
+import io
 
 # Validate API key
 api_key = os.environ.get("GOOGLE_API_KEY")
@@ -45,45 +46,48 @@ def text_to_speech(text):
         
         return response.audio_content
     except Exception as e:
-        st.warning(f"Could not generate audio: {str(e)}")
+        st.error(f"Audio error: {str(e)}")
         return None
 
 def process_message(prompt, use_voice=False):
     """Process user message and generate response"""
     st.session_state.messages.append({"role": "user", "content": prompt})
+    
     with st.chat_message("user"):
         st.write(prompt)
     
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            try:
-                # Build conversation context for iterative reasoning
-                conversation_context = "\n".join(
-                    [f"{msg['role'].capitalize()}: {msg['content']}" 
-                     for msg in st.session_state.messages[:-1]]
-                )
+        placeholder = st.empty()
+        placeholder.write("⏳ Thinking...")
+        
+        try:
+            # Build conversation context for iterative reasoning
+            conversation_context = "\n".join(
+                [f"{msg['role'].capitalize()}: {msg['content']}" 
+                 for msg in st.session_state.messages[:-1]]
+            )
+            
+            response = model.generate_content(
+                f"You discuss conspiracy theories in a balanced thought-provoking way.\n\nConversation:\n{conversation_context}\nUser: {prompt}"
+            )
+            
+            if response and response.text:
+                reply = response.text
+                placeholder.write(reply)  # Replace "Thinking..." with actual response
+                st.session_state.messages.append({"role": "assistant", "content": reply})
                 
-                response = model.generate_content(
-                    f"You discuss conspiracy theories in a balanced thought-provoking way.\n\nConversation:\n{conversation_context}\nUser: {prompt}"
-                )
-                
-                if response and response.text:
-                    reply = response.text
-                    st.write(reply)
-                    st.session_state.messages.append({"role": "assistant", "content": reply})
-                    
-                    # Auto-play audio if voice was used
-                    if use_voice:
-                        audio_content = text_to_speech(reply)
-                        if audio_content:
-                            st.audio(audio_content, format="audio/mp3", autoplay=True)
-                else:
-                    st.error("❌ Failed to get a response from the model. Try again.")
-                    st.session_state.messages.pop()
-                    
-            except Exception as e:
-                st.error(f"❌ Error communicating with the API: {str(e)}")
+                # Generate and play audio if voice was used
+                if use_voice:
+                    audio_content = text_to_speech(reply)
+                    if audio_content:
+                        st.audio(audio_content, format="audio/mp3", autoplay=True)
+            else:
+                placeholder.error("❌ Failed to get a response. Try again.")
                 st.session_state.messages.pop()
+                
+        except Exception as e:
+            placeholder.error(f"❌ Error: {str(e)}")
+            st.session_state.messages.pop()
 
 # Display conversation history
 for msg in st.session_state.messages:
