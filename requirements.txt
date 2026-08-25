@@ -1,2 +1,5 @@
 streamlit
 google-generativeai
+google-cloud-speech
+google-cloud-texttospeech
+python-dotenv
