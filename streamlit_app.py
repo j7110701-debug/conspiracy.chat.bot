@@ -1,11 +1,10 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-from google.cloud import speech_v1
-from google.cloud import texttospeech_v1
-import io
+import pyttsx3
+from io import BytesIO
 
-# Validate API keys
+# Validate API key
 api_key = os.environ.get("GOOGLE_API_KEY")
 if not api_key:
     st.error("❌ GOOGLE_API_KEY environment variable not set. Please configure it.")
@@ -26,51 +25,8 @@ if "messages" not in st.session_state:
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
-        # Play audio for assistant messages if available
-        if msg["role"] == "assistant" and "audio" in msg:
-            st.audio(msg["audio"], format="audio/mp3")
 
-# Create two columns for input methods
-col1, col2 = st.columns(2)
-
-with col1:
-    # Text input
-    if prompt := st.chat_input("Ask about any conspiracy theory..."):
-        process_prompt(prompt, use_voice=False)
-
-with col2:
-    # Voice input button
-    st.markdown("**Or use voice input:**")
-    audio_value = st.audio_input("🎤 Click to record your question")
-    
-    if audio_value is not None:
-        try:
-            # Convert audio to text using Google Speech-to-Text
-            client = speech_v1.SpeechClient()
-            
-            # Read audio bytes
-            audio_bytes = audio_value.read()
-            
-            # Prepare request
-            audio = speech_v1.RecognitionAudio(content=audio_bytes)
-            config = speech_v1.RecognitionConfig(
-                encoding=speech_v1.RecognitionConfig.AudioEncoding.LINEAR16,
-                sample_rate_hertz=16000,
-                language_code="en-US",
-            )
-            
-            # Perform transcription
-            response = client.recognize(config=config, audio=audio)
-            
-            if response.results:
-                prompt = response.results[0].alternatives[0].transcript
-                st.success(f"📝 Heard: {prompt}")
-                process_prompt(prompt, use_voice=True)
-        except Exception as e:
-            st.error(f"❌ Error processing audio: {str(e)}")
-
-def process_prompt(prompt, use_voice=False):
-    """Process user prompt and generate response"""
+if prompt := st.chat_input("Ask about any conspiracy theory..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.write(prompt)
@@ -81,7 +37,7 @@ def process_prompt(prompt, use_voice=False):
                 # Build conversation context for iterative reasoning
                 conversation_context = "\n".join(
                     [f"{msg['role'].capitalize()}: {msg['content']}" 
-                     for msg in st.session_state.messages[:-1]]
+                     for msg in st.session_state.messages[:-1]]  # Exclude the last user message to avoid duplication
                 )
                 
                 response = model.generate_content(
@@ -91,45 +47,37 @@ def process_prompt(prompt, use_voice=False):
                 if response and response.text:
                     reply = response.text
                     st.write(reply)
+                    st.session_state.messages.append({"role": "assistant", "content": reply})
                     
-                    # Generate audio response if voice was used
-                    audio_content = None
-                    if use_voice:
-                        try:
-                            tts_client = texttospeech_v1.TextToSpeechClient()
-                            synthesis_input = texttospeech_v1.SynthesisInput(text=reply)
-                            voice = texttospeech_v1.VoiceSelectionParams(
-                                language_code="en-US",
-                                ssml_gender=texttospeech_v1.SsmlVoiceGender.NEUTRAL,
-                            )
-                            audio_config = texttospeech_v1.AudioConfig(
-                                audio_encoding=texttospeech_v1.AudioEncoding.MP3,
-                            )
-                            
-                            tts_response = tts_client.synthesize_speech(
-                                input=synthesis_input,
-                                voice=voice,
-                                audio_config=audio_config,
-                            )
-                            
-                            audio_content = tts_response.audio_content
-                            st.audio(audio_content, format="audio/mp3")
-                        except Exception as e:
-                            st.warning(f"⚠️ Could not generate audio: {str(e)}")
-                    
-                    st.session_state.messages.append({
-                        "role": "assistant", 
-                        "content": reply,
-                        "audio": audio_content
-                    })
+                    # Add listen button for response
+                    col1, col2 = st.columns([3, 1])
+                    with col2:
+                        if st.button("🔊 Listen"):
+                            try:
+                                # Convert text to speech
+                                engine = pyttsx3.init()
+                                engine.setProperty('rate', 150)  # Speed
+                                
+                                # Save to bytes
+                                audio_buffer = BytesIO()
+                                engine.save_to_file(reply, "temp_audio.mp3")
+                                engine.runAndWait()
+                                
+                                # Play audio
+                                with open("temp_audio.mp3", "rb") as f:
+                                    st.audio(f.read(), format="audio/mp3")
+                                
+                                # Clean up
+                                if os.path.exists("temp_audio.mp3"):
+                                    os.remove("temp_audio.mp3")
+                            except Exception as e:
+                                st.warning(f"Could not generate audio: {str(e)}")
                 else:
                     st.error("❌ Failed to get a response from the model. Try again.")
+                    # Remove the incomplete user message
                     st.session_state.messages.pop()
                     
             except Exception as e:
                 st.error(f"❌ Error communicating with the API: {str(e)}")
+                # Remove the incomplete user message
                 st.session_state.messages.pop()
-
-# Call function for text input
-if prompt := st.chat_input("Ask about any conspiracy theory..."):
-    process_prompt(prompt, use_voice=False)
