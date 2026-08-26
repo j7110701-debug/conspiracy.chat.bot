@@ -8,7 +8,7 @@ if not api_key:
     st.stop()
 
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-3.7-flash")
+model = genai.GenerativeModel("gemini-3.6-flash")
 
 st.set_page_config(page_title="Conspiracy Chat Bot")
 st.title("Conspiracy Chat Bot")
