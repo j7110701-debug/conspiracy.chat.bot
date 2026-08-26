@@ -1,7 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-
+import requests 
 api_key = os.environ.get("GOOGLE_API_KEY")
 if not api_key:
     st.error("GOOGLE_API_KEY not set")
