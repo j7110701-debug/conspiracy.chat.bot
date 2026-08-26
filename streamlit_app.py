@@ -1,18 +1,18 @@
+
+=======
 import streamlit as st
 import streamlit as st
 import google.generativeai as genai
+>>>>>>> e0bdb8f3ee94607d40c9003265e33573749fb4e2
 import os
 import requests
-
 # Validate API key
 api_key = os.environ.get("GOOGLE_API_KEY")
 if not api_key:
     st.error("❌ GOOGLE_API_KEY environment variable not set")
         st.stop()
-        
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-3.6-flash")
-        
         st.set_page_config(page_title="Conspiracy Chat Bot")
         st.title("🛸 Conspiracy Chat Bot")
         st.markdown("**Author:** Jimbo")
@@ -27,80 +27,64 @@ if not api_key:
                     response = model.generate_content(prompt)
                         reply = response.text
                             st.session_state.messages.append({"role": "assistant", "content": reply})
-                            
                             for msg in st.session_state.messages:
                                 with st.chat_message(msg["role"]):
                                         st.write(msg["content"])
-                                        
                                         if prompt := st.chat_input("Ask about any conspiracy theory..."):
                                             process_message(prompt)
                                                 st.rerun()import streamlit as st
                                                 import google.genai as genai
                                                 import os
                                                 import requests
-                                                
                                                 # Validate API key
                                                 api_key = os.environ.get("GOOGLE_API_KEY")
                                                 if not api_key:
                                                     st.error("❌ GOOGLE_API_KEY environment variable not set")
                                                         st.stop()
-                                                        
                                                         genai.configure(api_key=api_key)
                                                         model = genai.GenerativeModel("gemini-1.5-flash")
-                                                        
                                                         st.set_page_config(page_title="Conspiracy Chat Bot")
                                                         st.title("🛸 Conspiracy Chat Bot")
                                                         st.markdown("**Author:** Jimbo")
                                                         st.caption("Iterative reasoning on conspiracy theories")
-                                                        st.markdown("---")
-                                                        
+                                                        st.markdown("---"))
                                                         if "messages" not in st.session_state:
                                                             st.session_state.messages = []
-                                                            
                                                             def process_message(prompt):
                                                                 st.session_state.messages.append({"role": "user", "content": prompt})
                                                                     response = model.generate_content(prompt)
                                                                         reply = response.text
                                                                             st.session_state.messages.append({"role": "assistant", "content": reply})
-                                                                            
                                                                             for msg in st.session_state.messages:
                                                                                 with st.chat_message(msg["role"]):
-                                                                                        st.write(msg["content"])
-                                                                                        
+                                                                                        st.write(msg["content 
                                                                                         if prompt := st.chat_input("Ask about any conspiracy theory..."):
                                                                                             process_message(prompt)
                                                                                                 st.rerun()import google.generativeai as genai as genai
 import os
 import requests
-
 # Validate API key
 api_key = os.environ.get("GOOGLE_API_KEY")
 if not api_key:
     st.error("❌ GOOGLE_API_KEY environment variable not set")
     st.stop()
-
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
-
 st.set_page_config(page_title="Conspiracy Chat Bot")
 st.title("🛸 Conspiracy Chat Bot")
 st.markdown("**Author:** Jimbo")
 st.caption("Iterative reasoning on conspiracy theories")
 st.markdown("---")
-
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
 def process_message(prompt):
     st.session_state.messages.append({"role": "user", "content": prompt})
     response = model.generate_content(prompt)
     reply = response.text
     st.session_state.messages.append({"role": "assistant", "content": reply})
-
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
-
 if prompt := st.chat_input("Ask about any conspiracy theory..."):
     process_message(prompt)
     st.rerun()
