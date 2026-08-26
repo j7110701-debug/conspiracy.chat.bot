@@ -1,5 +1,5 @@
-import streamlit as
-import google.generativeai as genai
+import streamlit as streamlit "app.py"
+import google.genai as genai
 import os
 import requests 
 api_key = os.environ.get("GOOGLE_API_KEY")
@@ -8,7 +8,7 @@ if not api_key:
     st.stop()
 
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-3.6-flash")
 
 st.set_page_config(page_title="Conspiracy Chat Bot")
 st.title("Conspiracy Chat Bot")
