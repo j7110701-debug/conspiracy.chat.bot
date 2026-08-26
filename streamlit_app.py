@@ -1,5 +1,5 @@
 import streamlit as st
-import google.Generative as genai
+import google.Generativeai as genai
 import os
 import requests 
 api_key = os.environ.get("GOOGLE_API_KEY")
