@@ -305,7 +305,7 @@ async def ui(request: Request):
                 
                 html += '<div class="result-section">';
                 html += '<h3>3️⃣ Final Answer</h3>';
-                html += '<pre>' + escapeHtml(data.final || data.final || '') + '</pre>';
+                html += '<pre>' + escapeHtml(data.final || '') + '</pre>';
                 html += '</div>';
               }} else {{
                 html += '<div class="result-section">';
@@ -334,8 +334,7 @@ async def ui(request: Request):
           document.getElementById('q').addEventListener('keydown', function(e) {{
             if (e.ctrlKey && e.key === 'Enter') {{
               submitQuestion();
-            }}
-          }});
+            }}\n          }});
         </script>
       </body>
     </html>
