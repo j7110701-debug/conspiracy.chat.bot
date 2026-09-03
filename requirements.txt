@@ -1,3 +1,10 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+click
+openai
+anthropicllama-cpp-python
 streamlit
 google-generativeai
 requests
